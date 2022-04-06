@@ -6,9 +6,9 @@
 
 ## Authors
 
-* [Vishwanath Hosdurga Suresh](mailto: vs542176@dal.ca)
-* [Aabhaas Jain](mailto: aabhaas.jain@dal.ca)
-* [Het Shah](mailto: ht699147@dal.ca)
+* [Vishwanath Hosdurga Suresh](mailto:vs542176@dal.ca)
+* [Aabhaas Jain](mailto:aabhaas.jain@dal.ca)
+* [Het Shah](mailto:ht699147@dal.ca)
 
 ## Built With
 
