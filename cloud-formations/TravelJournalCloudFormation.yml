@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# This is the cloudformation template for the travel journal application
+# It consists of a VPC with a private and a public subnet. 
+# It consists of a security group which allows SSH, HTTP, HTTPS and 
+# ports used by our application i.e. 3000 for front end and 5000 for backend
+# It also consists of an EC2 instance, 3 dynamo DB tables and an S3 bucket.
+
+Resources:
+
+  # Creation of VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Creating one private and public subnet
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]  
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-Public
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-Private
+        
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: Public
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: Private
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  # Elastic IP for VPC
+  ElasticIPAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-VPC
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt ElasticIPAddress.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags: 
+      - Key: Name
+        Value: !Sub NAT-${AWS::StackName}
+  
+  # Elastic IP for EC2
+  ElasticIPAddressEC2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+      InstanceId: !Ref ApplicationEC2
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-EC2
+
+  # Security group for the EC2 instance
+  ApplicationEC2SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable required ports for the application to be deployed on EC2
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-EC2
+
+  # EC2 instance of the application
+  ApplicationEC2: 
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      ImageId: "ami-04505e74c0741db8d"
+      InstanceType: t2.micro
+      KeyName: group39
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !GetAtt ApplicationEC2SecurityGroup.GroupId
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-Server
+
+  # Dynamo DB with 3 tables
+  ApplicationDynamoDBCounters:
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      TableName: counters
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  ApplicationDynamoDBUsers:
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      TableName: users
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+      - AttributeName: email
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  ApplicationDynamoDBBlogs:
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      TableName: blogs
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: N
+        - AttributeName: blogId
+          AttributeType: N
+      KeySchema:
+      - AttributeName: userId
+        KeyType: HASH
+      - AttributeName: blogId
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  # S3 bucket
+  ApplicationS3: 
+    Type: "AWS::S3::Bucket"
+    Properties: 
+      BucketName: travel-journal-images
+      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+            BlockPublicAcls : false
+            BlockPublicPolicy : false
+            IgnorePublicAcls : false
+            RestrictPublicBuckets : false

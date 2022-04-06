@@ -1,0 +1,18 @@
+{
+    "region": "us-east-1",
+    "accessKeyId":"ASIASMNHOIZ7YMVFVRJW",
+    "secretAccessKey":"RZ9Yfi4HIU2aPdXVBEOexku9moH04cdWgcrIiwdI",
+    "sessionToken":"FwoGZXIvYXdzEPv//////////wEaDKm5GcxYzErEBFnrhyLAAeMUXHqaKsfXav0gJ3s6wjvP6ikP3uU3rzPAy9WJZt1D14ORzLJdnaMOvM/6FnE4GsruPbJLjYhoBV3/y6yH16voh5ygpbIgKR18VkwYZQfMSgDcOz22doovJ6mdv8EB/c0zhtvnK1pjjUgevaZ7AIn+FM0jjKegsutI/V4idu63rlvnhh/wTZj72oYMYwfrYeusapoXLnE6ijm/lJRwXyU/ilDQwPWuaGRljlC99FRvTdMO9Q+1xvUJT368GlQH1SjxxK6SBjItl2NaxR8wAUdSer0QTDCpPA4uMqzgLXjGT8Q5tu/+FSbJK5gQWznWtPViVatQ",
+    
+    "host": "ec2-44-193-194-164.compute-1.amazonaws.com",
+    "username": "ubuntu",
+    "privateKey": "./group39.pem",
+    
+    "successMessage":"Hi,\n\n Your Application has been deployed successfully!\n\nRegards,\nDeployment Automation Team",
+    "failMessage":"Hi,\n\n Your Application deployment has failed!\n\nRegards,\nDeployment Automation Team",
+    "connectionErrorMessage":"Hi,\n\n An error occured in connecting to the deployed server!\n\nRegards,\nDeployment Automation Team",
+    "credErrorMessage":"Hi,\n\n An error occured while fetching the credentials!\n\nRegards,\nDeployment Automation Team",
+    "subject": "Deployment status",
+    "topicArn": "arn:aws:sns:us-east-1:164096788095:Deployement"
+    
+}

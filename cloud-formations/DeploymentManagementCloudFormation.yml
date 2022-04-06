@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# This is the cloud formation template for the Management server.
+# It consists of an EC2 instance which is used to rum the deployment scripts.
+# It consists of SNS which is used to notify deployment status.
+# It also consists of Secrets manager which holgs the git lab repo private token.
+
+Resources:
+
+  # Creating an Elastic IP for EC2
+  ElasticIPAddressManagementEC2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+      InstanceId: !Ref ManagementEC2
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-EC2
+
+  # Creating EC2 instance
+  ManagementEC2: 
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      ImageId: "ami-04505e74c0741db8d"
+      InstanceType: t2.micro
+      KeyName: group39
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-Server
+
+  # Creating SNS with topic and end points
+  ManagementSNS: 
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: "Deployment"
+      Subscription: 
+        - Endpoint: "aabhaas.jain@dal.ca"
+          Protocol: "email"
+        - Endpoint: "vs542176@dal.ca"
+          Protocol: "email"
+
+  # Creating Secrets Manager with secret string
+  ManagementSecretsManager:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: GitLabToken
+      Description: "This secret has a the gitlab token."
+      SecretString: '{"gitLabToken":"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"}'
