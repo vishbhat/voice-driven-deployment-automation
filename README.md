@@ -2,7 +2,6 @@
 
 * *Date Created*: 02 APR 2022
 * *Last Modification Date*: 20 APR 2022
-* *Git URL*: https://git.cs.dal.ca/vhsuresh/csci5409-project-group39.git
 
 ## Authors
 
